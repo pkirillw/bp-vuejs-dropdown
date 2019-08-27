@@ -9,22 +9,24 @@
         <svg v-if="isLoading"
              class="bp-dropdown__icon bp-dropdown__icon--spin"
              viewBox="0 0 512 512">
-          <path fill="currentColor" d="M304 48c0 26.51-21.49 48-48 48s-48-21.49-48-48 21.49-48 48-48 48 21.49 48 48zm-48 368c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48zm208-208c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48zM96 256c0-26.51-21.49-48-48-48S0 229.49 0 256s21.49 48 48 48 48-21.49 48-48zm12.922 99.078c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48c0-26.509-21.491-48-48-48zm294.156 0c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48c0-26.509-21.49-48-48-48zM108.922 60.922c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.491-48-48-48z"></path>
+          <path fill="currentColor"
+                d="M304 48c0 26.51-21.49 48-48 48s-48-21.49-48-48 21.49-48 48-48 48 21.49 48 48zm-48 368c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48zm208-208c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.49-48-48-48zM96 256c0-26.51-21.49-48-48-48S0 229.49 0 256s21.49 48 48 48 48-21.49 48-48zm12.922 99.078c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48c0-26.509-21.491-48-48-48zm294.156 0c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48c0-26.509-21.49-48-48-48zM108.922 60.922c-26.51 0-48 21.49-48 48s21.49 48 48 48 48-21.49 48-48-21.491-48-48-48z"></path>
         </svg>
         <svg v-else
              class="bp-dropdown__icon"
              :class="{ [`bp-dropdown__icon--${align}`]: align }"
              viewBox="0 0 256 512">
-            <path fill="currentColor" d="M119.5 326.9L3.5 209.1c-4.7-4.7-4.7-12.3 0-17l7.1-7.1c4.7-4.7 12.3-4.7 17 0L128 287.3l100.4-102.2c4.7-4.7 12.3-4.7 17 0l7.1 7.1c4.7 4.7 4.7 12.3 0 17L136.5 327c-4.7 4.6-12.3 4.6-17-.1z"></path>
+            <path fill="currentColor"
+                  d="M119.5 326.9L3.5 209.1c-4.7-4.7-4.7-12.3 0-17l7.1-7.1c4.7-4.7 12.3-4.7 17 0L128 287.3l100.4-102.2c4.7-4.7 12.3-4.7 17 0l7.1 7.1c4.7 4.7 4.7 12.3 0 17L136.5 327c-4.7 4.6-12.3 4.6-17-.1z"></path>
         </svg>
       </slot>
     </span>
         <transition name="fade">
             <div v-if="!isHidden"
-                 class="bp-dropdown__body"
+                 class="bp-dropdown__body row"
                  :id="id"
                  :style="{ minWidth: `${width}px`, top: `${top}px`, left: `${left}px` }"
-                 :class="{ [`${className}-bp__body`]: className }"
+                 :class="{ classNameBody }"
                  @click="_onBodyClick"
                  @mouseenter="_onBodyEnter"
                  @mouseleave="_onBodyLeave">
@@ -54,13 +56,7 @@
             align: {
                 type: String,
                 required: false,
-                default: 'auto'
-            },
-
-            alignOrder: {
-                type: Array,
-                required: false,
-                default: () => ['right-bottom', 'right-top', 'left-bottom', 'left-top', 'bottom-left', 'bottom-right', 'top-left', 'top-right']
+                default: 'bottom'
             },
 
             x: {
@@ -100,6 +96,11 @@
             },
 
             className: {
+                type: String,
+                required: false,
+                default: ''
+            },
+            classNameBody: {
                 type: String,
                 required: false,
                 default: ''
@@ -260,7 +261,9 @@
                     setTimeout(this.prepare, 0);
                 });
 
-                promise.catch(() => { throw Error('bp-dropdown promise error') });
+                promise.catch(() => {
+                    throw Error('bp-dropdown promise error')
+                });
             },
 
             prepare() {
@@ -285,32 +288,6 @@
                     return;
                 }
 
-                let rect;
-                if (this.align === 'auto') {
-                    // --- view port size
-                    const vpWidth = document.documentElement.clientWidth;
-                    const vpHeight = document.documentElement.clientHeight;
-
-                    for (let i = 0; i <= this.alignOrder.length; i++) {
-                        const align = (i === this.alignOrder.length ? this.alignOrder[0] : this.alignOrder[i]);
-                        rect = this.calcRectFromAlign(btn, body, align);
-
-                        if (rect.left >= pageXOffset &&
-                            rect.top >= pageYOffset &&
-                            rect.right <= pageXOffset + vpWidth &&
-                            rect.bottom <= pageYOffset + vpHeight) {
-                          break;
-                        }
-                    }
-                } else {
-                  rect = this.calcRectFromAlign(btn, body, this.align);
-                }
-
-                this.top = rect.top;
-                this.left = rect.left;
-            },
-
-            calcRectFromAlign (btn, body, align) {
                 const coords = this.getCoords(btn);
 
                 // --- current position
@@ -325,52 +302,31 @@
                 const bodyWidth = body.offsetWidth;
                 const bodyHeight = body.offsetHeight;
 
-                let _top, _left;
-
-                switch(align) {
+                switch (this.align) {
                     case 'top':
-                    case 'top-right':
-                        _top = (currentTop + pageYOffset - bodyHeight);
-                        _left = (currentLeft + pageXOffset);
-                        break;
-                    case 'top-left':
-                        _top = (currentTop + pageYOffset - bodyHeight);
-                        _left = (currentLeft + pageXOffset - bodyWidth + btnWidth);
+                        this.top = (currentTop + pageYOffset - bodyHeight);
+                        this.left = (currentLeft + pageXOffset);
                         break;
                     case 'right':
-                    case 'right-bottom':
-                        _top = (currentTop + pageYOffset);
-                        _left = (currentLeft + pageXOffset + btnWidth);
-                        break;
-                    case 'right-top':
-                        _top = (currentTop + pageYOffset - bodyHeight + btnHeight);
-                        _left = (currentLeft + pageXOffset + btnWidth);
-                        break;
-                    case 'bottom-left':
-                        _top = (currentTop + pageYOffset + btnHeight);
-                        _left = (currentLeft + pageXOffset - bodyWidth + btnWidth);
-                        break;
-                    case 'left':
-                    case 'left-bottom':
-                        _top = (currentTop + pageYOffset);
-                        _left = (currentLeft + pageXOffset - bodyWidth);
-                        break;
-                    case 'left-top':
-                        _top = (currentTop + pageYOffset - bodyHeight + btnHeight);
-                        _left = (currentLeft + pageXOffset - bodyWidth);
+                        this.top = (currentTop + pageYOffset);
+                        this.left = (currentLeft + pageXOffset + btnWidth);
                         break;
                     case 'bottom':
-                    case 'bottom-right':
+                        this.top = (currentTop + pageYOffset + btnHeight);
+                        this.left = (currentLeft + pageXOffset);
+                        break;
+                    case 'left':
+                        this.top = (currentTop + pageYOffset);
+                        this.left = (currentLeft + pageXOffset - bodyWidth);
+                        break;
                     default:
-                        _top = (currentTop + pageYOffset + btnHeight);
-                        _left = (currentLeft + pageXOffset);
+                        this.top = (currentTop + pageYOffset + btnHeight);
+                        this.left = (currentLeft + pageXOffset);
                         break;
                 }
 
-                _top += this.y;
-                _left += this.x;
-
-                return {top: _top, left: _left, bottom: _top + bodyHeight, right: _left + bodyWidth};
+                this.top += this.y;
+                this.left += this.x;
             },
 
             getCoords(el) {
@@ -399,12 +355,12 @@
     }
 
     .bp-dropdown__btn {
-        display: inline-flex;
+        /*display: inline-flex;
         align-items: center;
         padding: 3px 5px;
         border: 1px solid #efefef;
         cursor: pointer;
-        transition: background-color .1s ease;
+        transition: background-color .1s ease;*/
     }
 
     .bp-dropdown__sub {
@@ -467,11 +423,12 @@
     }
 
     .bp-dropdown__body {
-        position: fixed;
-        top: 0;
-        left: 0;
-        padding: 6px 8px;
+        position: absolute;
+        top: 40px !important;
+        left: 0 !important;
+        padding: 0px;
         background-color: #fff;
+        border: 1px solid #ddd;
         box-shadow: 0 5px 15px -5px rgba(0, 0, 0, .5);
         z-index: 9999;
     }
@@ -486,10 +443,10 @@
 
     @keyframes spin {
         0% {
-            transform:rotate(0)
+            transform: rotate(0)
         }
         100% {
-            transform:rotate(360deg)
+            transform: rotate(360deg)
         }
     }
 </style>
